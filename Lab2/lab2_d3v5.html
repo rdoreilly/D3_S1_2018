@@ -1,0 +1,84 @@
+<!DOCTYPE html>
+<meta charset="utf-8">
+
+<!-- Tutorial based on D3 v3 taken from
+    https://bost.ocks.org/mike/bar/3/-->
+
+<meta charset="utf-8">
+<style>
+
+    .bar {
+        fill: steelblue;
+    }
+    .axis text {
+        font: 10px sans-serif;
+    }
+    .axis path,
+    .axis line {
+        fill: none;
+        stroke: #000;
+        shape-rendering: crispEdges;
+    }
+
+    .x.axis path {
+        display: none;
+    }
+
+</style>
+<svg class="chart"></svg>
+<script src="//d3js.org/d3.v5.min.js" charset="utf-8"></script>
+<script>
+
+    // Data wrangling - reading in our csv file with the following columns
+    // School_Roll_No,Short_Name,Level,Male,Female
+
+    // Note the .dsv function is using the delimiter of ',' as oppossed to '\t' from Lab 1
+    // dsv - delimited separated values......?
+    d3.dsv(",","studentNum.csv",function(d){
+        return {
+            id: d.School_Roll_No,
+            name: d.Short_Name,
+            level: d.Level,
+            numOfMaleStudents: +d.Male,     // the + coerces to number
+            numOfFemaleStudents: +d.Female  // the + coerces to number
+        };
+    }).then(function(data){
+        //console.log(data);  // Added to see is data prints
+
+        // Get the min and max for boys and girls
+        mStats = d3.extent(data, el=>+el.numOfMaleStudents);
+        console.log("Male: " + mStats);
+        fStats = d3.extent(data, el=>+el.numOfFemaleStudents);
+        console.log("Female: " + fStats);
+
+        // Identify the largest value for charting both sexes together
+        if(mStats[1]>fStats[1]){
+            maxValue = mStats[1]; //if max male value > female then return male
+        }else if(mStats[1] < fStats[1]){
+            maxValue = fStats[1];  //if max female value > male then return male
+        }else{
+            maxValue = fStats[1]; // else their equal, return either
+        }
+
+        var maleYScale = d3.scaleLinear().domain([0,mStats[1]]).range([0,100]);
+
+        // Charting the male values
+        d3.select("svg")
+            .selectAll("rect")
+            .data(data)
+            .enter()
+            .append("rect")
+            .attr("width", 10)
+            .attr("height", d => d.numOfMaleStudents)
+            .style("fill","#FE9922") // color of the bars
+            .style("stroke", "#9A8B7A") // color of border line of bar
+            .style("stroke-width", "1px") // width of border line
+            //.style("opacity",.25)
+            .attr("x", (d,i) => i*10) // i*10 indexes based on position of value in array
+            .attr("y", d => 100 - maleYScale(d.numOfMaleStudents)); // Remember we have to invert the values, 100 is range max from the maleYScale
+
+});
+
+
+
+</script>
