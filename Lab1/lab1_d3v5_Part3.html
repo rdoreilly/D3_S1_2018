@@ -1,0 +1,132 @@
+<!DOCTYPE html>
+<meta charset="utf-8">
+
+<!-- Tutorial based on D3 v3 taken from
+    https://bost.ocks.org/mike/bar/3/-->
+
+<meta charset="utf-8">
+<style>
+
+    .bar {
+        fill: steelblue;
+    }
+
+    .axis text {
+        font: 10px sans-serif;
+    }
+
+    .axis path,
+    .axis line {
+        fill: none;
+        stroke: #000;
+        shape-rendering: crispEdges;
+    }
+
+    .x.axis path {
+        display: none;
+    }
+
+</style>
+<svg class="chart"></svg>
+<script src="//d3js.org/d3.v5.min.js" charset="utf-8"></script>
+<script>
+
+    var margin = {top: 20, right: 30, bottom: 30, left: 40},
+        width = 960 - margin.left - margin.right,
+        height = 500 - margin.top - margin.bottom;
+
+    /**In D3 4.x rangeRoundBands was moved to the new Band scale:
+
+     D3 3.x version
+
+        var x = d3.scale.ordinal()
+            .rangeRoundBands([0, width], .1);
+     The above calculates bands and sets padding between band. In v4, the equivalent is
+
+     D3 4.x version
+
+        var x = d3.scaleBand()
+            .rangeRound([0, width])
+            .padding(0.1);
+     */
+    var x = d3.scaleBand()         //Changed from var x = d3.scale.ordinal().rangeRoundBands([0, width], .1);
+        .rangeRound([0, width])
+        .padding(0.1);
+
+    var y = d3.scaleLinear()      //Changed from d3.scale.linear()
+        .range([height, 0]);
+
+    //var xAxis = d3.svg.axis().scale(x).orient("bottom");
+    var xAxis = d3.axisBottom(x);
+
+    /**var yAxis = d3.svg.axis()
+        .scale(y)
+        .orient("left")
+        .ticks(10, "%");*/
+    var yAxis = d3.axisLeft(y); //NEED TO COMPLETE
+
+
+
+
+    var chart = d3.select(".chart")
+        .attr("width", width + margin.left + margin.right)
+        .attr("height", height + margin.top + margin.bottom)
+        .append("g")
+        .attr("transform", "translate(" + margin.left + "," + margin.top + ")");
+
+
+    /** <Change to callbacks>
+     Read - https://github.com/d3/d3/blob/master/CHANGES.md
+     D3 now uses Promises instead of asynchronous callbacks to load data. Promises simplify the structure of
+     asynchronous code, especially in modern browsers that support async and await. (See this introduction to
+     promises on Observable @ link above)
+
+     <Change to method>
+     d3.dsv depreceated for v5 - Equivalent to d3.dsv with the tab character as the delimiter.
+     https://github.com/d3/d3-fetch#dsv
+     */
+    d3.dsv("\t","alpha_data.tsv",function(d){
+        return {
+            name: d.name,
+            value: +d.value // the + coerces to number
+        };
+    }).then(function(data){
+        console.log(data);  // Added to see is data prints
+    //d3.tsv("alpha_data.tsv", type, function(error, data) {
+        x.domain(data.map(function(d) { return d.name; }));
+        y.domain([0, d3.max(data, function(d) { return d.value; })]);
+
+        chart.append("g")
+            .attr("class", "x axis")
+            .attr("transform", "translate(0," + height + ")")
+            .call(xAxis);
+
+        chart.append("g")
+            .attr("class", "y axis")
+            .call(yAxis)
+            .append("text")
+            .attr("transform", "rotate(-90)")
+            .attr("y", 6)
+            .attr("dy", ".71em")
+            .style("text-anchor", "end")
+            .text("Frequency");
+
+        chart.selectAll(".bar")
+            .data(data)
+            .enter().append("rect")
+            .attr("class", "bar")
+            .attr("x", function(d) { return x(d.name); })
+            .attr("y", function(d) { return y(d.value); })
+            .attr("height", function(d) { return height - y(d.value); })
+            .attr("width", x.bandwidth()); // Changed from .attr("width", x.rangeBand());
+    });
+
+
+    /**     Omit as coercing when we read in the value
+
+    function type(d) {
+        d.value = +d.value; // coerce to number
+        return d;
+    }*/
+
+</script>
