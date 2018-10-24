@@ -23,9 +23,15 @@
     .x.axis path {
         display: none;
     }
-
 </style>
+
 <svg class="chart"></svg>
+
+<svg width="200" height="200" id="svg1"></svg>
+<svg width="200" height="200" id="svg2"></svg>
+<svg width="200" height="200" id="svg3"></svg>
+
+
 <script src="//d3js.org/d3.v5.min.js" charset="utf-8"></script>
 <script>
 
@@ -60,7 +66,112 @@
             maxValue = fStats[1]; // else their equal, return either
         }
 
+        /***
+         * Here we are filtering the data based on the level of education to generate two arrays of objectse.g.
+         * filteredPrimary and filteredSecondary. */
+        var filteredPrimary = data.filter(function(d) {
+            return d.level == "Primary";
+        });
+
+        var filteredSecondary = data.filter(function(d) {
+            return d.level == "Secondary";
+        });
+
+        // Define variables to store data for our queries
+        totalMalePrimaryStudents = 0;
+        totalFemalePrimaryStudents = 0;
+        totalMaleSecondaryStudents = 0;
+        totalFemaleSecondaryStudents = 0;
+
+        // Iterate the array to get the sum for m/f for primary and secondary
+        filteredPrimary.forEach(function(d) {
+            totalMalePrimaryStudents += d.numOfMaleStudents;
+            totalFemalePrimaryStudents += d.numOfFemaleStudents;
+        });
+        filteredSecondary.forEach(function(d) {
+            totalMaleSecondaryStudents += d.numOfMaleStudents;
+            //isNaN - boolean test for "not a number"  normally you'd clean the data properly to ensure proper var
+            if(!(isNaN(d.numOfFemaleStudents))){
+                totalFemaleSecondaryStudents += d.numOfFemaleStudents;
+            }
+        });
+
+        console.log(filteredPrimary);
+        console.log("M " + totalMaleSecondaryStudents + " F " + totalFemaleSecondaryStudents);
+        console.log("M " + totalMalePrimaryStudents + " F " + totalFemalePrimaryStudents);
+
+        console.log(filteredSecondary);
+
+        /**
+         * Visualise the total number of students in Primary and Secondary education
+         *q1  Primary     Secondary
+         * Visualise the total number of female students in Primary and Secondary education
+         *
+         * q2 Total Female Primary        Total Female Secondary
+         *
+         * Visualise the total number of male students in Primary and Secondary education
+         * q3 Total Male Primary          Total Male Secondary
+         */
+
+        var q1Values = [totalMaleSecondaryStudents + totalFemaleSecondaryStudents, totalMalePrimaryStudents + totalFemalePrimaryStudents ];
+        console.log("q1Values"  + q1Values);
+
+        var q1YScale = d3.scaleLinear().domain([0,d3.max(q1Values)]).range([0,100]);
+
+        var svg1 = d3.select("#svg1");
+        svg1.selectAll("rect")
+            .data(q1Values)
+            .enter()
+            .append("rect")
+            .attr("width", 10)
+            .attr("height", d => q1YScale(d)) // Remember we have to scale the height based on the maleYScale which has the highest value
+            .style("fill","#FE9922") // color of the bars
+            .style("stroke", "#9A8B7A") // color of border line of bar
+            .style("stroke-width", "1px") // width of border line
+            //.style("opacity",.25)
+            .attr("x", (d,i) => i*10) // i*10 indexes based on position of value in array
+            .attr("y", d => 100 - q1YScale(d)); // Remember we have to invert the values, 100 is range max from the maleYScale
+
+        var q2Values = [totalFemaleSecondaryStudents, totalFemalePrimaryStudents ];
+        console.log("q2Values"  + q2Values);
+
+        var q2YScale = d3.scaleLinear().domain([0,d3.max(q2Values)]).range([0,100]);
+        var svg2 = d3.select("#svg2");
+        svg2.selectAll("rect")
+            .data(q2Values)
+            .enter()
+            .append("rect")
+            .attr("width", 10)
+            .attr("height", d => q2YScale(d)) // Remember we have to scale the height based on the maleYScale which has the highest value
+        .style("fill","#FE9922") // color of the bars
+            .style("stroke", "#9A8B7A") // color of border line of bar
+            .style("stroke-width", "1px") // width of border line
+            //.style("opacity",.25)
+            .attr("x", (d,i) => i*10) // i*10 indexes based on position of value in array
+        .attr("y", d => 100 - q2YScale(d)); // Remember we have to invert the values, 100 is range max from the maleYScale
+
+        var q3Values = [totalMaleSecondaryStudents, totalMalePrimaryStudents];
+        console.log("q3Values"  + q3Values);
+
+        var q3YScale = d3.scaleLinear().domain([0,d3.max(q3Values)]).range([0,100]);
+
+        var svg3 = d3.select("#svg3");
+        svg3.selectAll("rect")
+            .data(q3Values)
+            .enter()
+            .append("rect")
+            .attr("width", 10)
+            .attr("height", d => q3YScale(d)) // Remember we have to scale the height based on the maleYScale which has the highest value
+        .style("fill","#FE9922") // color of the bars
+            .style("stroke", "#9A8B7A") // color of border line of bar
+            .style("stroke-width", "1px") // width of border line
+            //.style("opacity",.25)
+            .attr("x", (d,i) => i*10) // i*10 indexes based on position of value in array
+        .attr("y", d => 100 - q3YScale(d)); // Remember we have to invert the values, 100 is range max from the maleYScale
+
+
         var maleYScale = d3.scaleLinear().domain([0,mStats[1]]).range([0,100]);
+        console.log("mStats[1]: " + mStats[1] + " " + maleYScale(mStats[1]));
 
         // Charting the male values
         d3.select("svg")
@@ -69,14 +180,13 @@
             .enter()
             .append("rect")
             .attr("width", 10)
-            .attr("height", d => d.numOfMaleStudents)
+            .attr("height", d => maleYScale(d.numOfMaleStudents)) // Remember we have to scale the height based on the maleYScale which has the highest value
             .style("fill","#FE9922") // color of the bars
             .style("stroke", "#9A8B7A") // color of border line of bar
             .style("stroke-width", "1px") // width of border line
             //.style("opacity",.25)
             .attr("x", (d,i) => i*10) // i*10 indexes based on position of value in array
             .attr("y", d => 100 - maleYScale(d.numOfMaleStudents)); // Remember we have to invert the values, 100 is range max from the maleYScale
-
 });
 
 
